@@ -1,0 +1,81 @@
+rules_version = '2';
+
+// RESTAURANT OS - Cloud Storage Security Rules
+// Default is DENY. Authorization reads the membership document in Firestore.
+// Paths are not secret: access is decided by active membership + permission, never by obscurity.
+// STATUS: written, not yet executed against the emulator (see docs/TENANT_ISOLATION.md).
+// NOTE: a Storage bucket requires the Firebase Blaze plan (see docs/STORAGE_STRUCTURE.md).
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function memberPath(t) {
+      return /databases/(default)/documents/tenants/$(t)/members/$(request.auth.uid);
+    }
+
+    function tenantPath(t) {
+      return /databases/(default)/documents/tenants/$(t);
+    }
+
+    function isActiveMember(t) {
+      return request.auth != null
+        && firestore.exists(memberPath(t))
+        && firestore.get(memberPath(t)).data.status == 'ACTIVE'
+        && firestore.exists(tenantPath(t))
+        && firestore.get(tenantPath(t)).data.status == 'ACTIVE';
+    }
+
+    function can(t, perm) {
+      return isActiveMember(t) && perm in firestore.get(memberPath(t)).data.permissions;
+    }
+
+    // Raster images only (SVG is excluded: it can carry scripts).
+    function isImageUpload(maxBytes) {
+      return request.resource.contentType.matches('image/(png|jpeg|webp)')
+        && request.resource.size > 0
+        && request.resource.size <= maxBytes;
+    }
+
+    function isDocumentUpload(maxBytes) {
+      return (request.resource.contentType == 'application/pdf'
+              || request.resource.contentType.matches('image/(png|jpeg|webp)'))
+        && request.resource.size > 0
+        && request.resource.size <= maxBytes;
+    }
+
+    match /tenants/{tenantId} {
+
+      // Logos and brand images are shown on the public website.
+      match /branding/{file=**} {
+        allow read: if true;
+        allow write: if can(tenantId, 'SETTINGS_MANAGE') && isImageUpload(5 * 1024 * 1024);
+        allow delete: if can(tenantId, 'SETTINGS_MANAGE');
+      }
+
+      // Menu images are shown on the public menu.
+      match /products/{file=**} {
+        allow read: if true;
+        allow write: if can(tenantId, 'MENU_MANAGE') && isImageUpload(5 * 1024 * 1024);
+        allow delete: if can(tenantId, 'MENU_MANAGE');
+      }
+
+      match /documents/{file=**} {
+        allow read: if can(tenantId, 'SETTINGS_MANAGE');
+        allow write: if can(tenantId, 'SETTINGS_MANAGE') && isDocumentUpload(10 * 1024 * 1024);
+        allow delete: if can(tenantId, 'SETTINGS_MANAGE');
+      }
+
+      match /invoices/{file=**} {
+        allow read: if can(tenantId, 'FINANCIAL_READ');
+        allow write: if can(tenantId, 'FINANCIAL_MANAGE') && isDocumentUpload(10 * 1024 * 1024);
+        allow delete: if can(tenantId, 'FINANCIAL_MANAGE');
+      }
+
+      match /employees/{file=**} {
+        allow read: if can(tenantId, 'STAFF_MANAGE');
+        allow write: if can(tenantId, 'STAFF_MANAGE') && isDocumentUpload(10 * 1024 * 1024);
+        allow delete: if can(tenantId, 'STAFF_MANAGE');
+      }
+    }
+  }
+}

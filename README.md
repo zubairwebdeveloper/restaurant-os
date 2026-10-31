@@ -1,36 +1,22 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Restaurant OS
 
-## Getting Started
+Multi-tenant restaurant SaaS platform (Next.js App Router, JavaScript/JSX only, Tailwind CSS, Redux Toolkit).
 
-First, run the development server:
+## Status
+**Phase 3 - Authentication and role-based access.** Login, registration, email verification, password reset, server sessions and route guards are implemented; they have NOT been tested against a live Firebase project or the emulators, and the Firebase rules tests have not been run (see docs/AUTHENTICATION.md and docs/TENANT_ISOLATION.md).
+Firestore and Storage rules live in `firebase/`. No sign-in or tenant onboarding yet (Phase 3 and 5).
 
+## Getting started
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run dev      # http://localhost:3000
+npm test         # unit tests (Vitest)
+npm run lint
+npm run build
 ```
+Review the interface foundation at `/dashboard/design-system` (toggle light/dark in the header).
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Rules of the project
+JavaScript/JSX only. Redux Toolkit is the single global state library (no Zustand).
+Redux is never an authorization boundary. Never commit secrets; see `.env.example`.
+Docs live in `docs/`.
