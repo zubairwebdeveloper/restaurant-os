@@ -12,18 +12,18 @@ Timestamps use server time (`serverTimestamp()` on the client where allowed, `Fi
 | `platformAuditLogs/{id}` | Platform audit trail | platform admins | never |
 | `tenantApplications/{id}` | Owner applications (`PENDING` → server approves/rejects) | owner of the application; platform admins | create only: own, `PENDING`, fixed fields |
 | `publicProfiles/{tenantId}` | Denormalised public website data (`status`, name, branding, website). Server writes; removed or set non-ACTIVE on suspension | anyone, only when `status == 'ACTIVE'` | never |
-| `tenants/{tenantId}` | Tenant root: `status`, `profile`, `branding`, `website`, `settings`, `subscription`, `ownerUid`, `createdAt` | active members; platform admins | members with `SETTINGS_MANAGE`, presentation fields only |
+| `tenants/{tenantId}` | Tenant root: `status`, `profile`, `branding`, `website`, `settings`, `subscription`, `ownerUid`, `createdAt` | active members; platform admins | members with `SETTINGS_MANAGE`: `settings` only. `branding` and `website` are written by validated Server Actions (Phase 5) |
 
 ## Tenant subcollections
 Every document carries `tenantId` equal to the path. Rules reject mismatches and changes.
 
 | Subcollection | Read | Client write |
 |---|---|---|
-| `members/{uid}` (`role`, `status`, `permissions[]`) | self; `STAFF_MANAGE`; platform admins | **never** (server only) |
+| `members/{uid}` (`uid`, `role`, `status`, `permissions[]`) | self; `STAFF_MANAGE`; platform admins | **never** (server only) |
 | `branches` | any active member | `SETTINGS_MANAGE` |
-| `categories`, `products`, `menus` | active members; anyone if `visibility == 'PUBLIC'` and tenant ACTIVE | `MENU_MANAGE` |
+| `categories`, `products`, `menus` | active members; anyone if `visibility == 'PUBLIC'` and tenant ACTIVE | **never** from the client (validated Server Actions only, Phase 6) |
 | `coupons` | active members | `MENU_MANAGE` |
-| `orders` | `ORDERS_READ` or `KITCHEN_READ` | **never** (server prices and writes) |
+| `orders` | `ORDERS_READ` or `KITCHEN_READ` | **never** (server prices and writes; Phase 7) |
 | `customers` | `CUSTOMERS_READ`/`CUSTOMERS_MANAGE` | `CUSTOMERS_MANAGE`, no delete |
 | `tables` | active members | `TABLES_MANAGE` |
 | `reservations` | `RESERVATIONS_MANAGE`/`TABLES_MANAGE` | `RESERVATIONS_MANAGE`, no delete |
@@ -57,3 +57,27 @@ tenants/{tenantId}/members/{uid} = {
 - Public menu data uses a `visibility` field and a public read rule, so public queries must include `where('visibility','==','PUBLIC')`.
 - Membership `permissions` are stored on the member document so rules can check them. Changing `ROLE_PERMISSIONS` does not update existing members; a server migration is required.
 - Each rules check costs extra document reads (membership + tenant + platform user lookups). Watch read quotas on the free tier.
+
+## Fields added by the platform (Phase 4, server-written)
+- `platformUsers/{uid}`: `uid`, `email`, `role`, `status`, `createdAt`, `createdBy`.
+- `platformAuditLogs/{id}`: `action`, `actorUid`, `targetType`, `targetId`, `details`, `createdAt`.
+- `tenantApplications/{id}` after review: `status` (`APPROVED` | `REJECTED`), `tenantId`, `reviewedBy`, `reviewedAt`, `rejectionReason`.
+- `tenants/{id}`: `applicationId`, `subscription { planId, status }`, `statusReason`, `statusChangedBy`, `statusChangedAt`; `tenants/{id}/auditLogs/{id}`: `tenantId`, `action`, `actorUid`, `details`, `createdAt`.
+
+## Website data (Phase 5, server-written)
+- `tenants/{id}.branding`: `template`, `fontPairing`, `primaryColor`, `tagline`.
+- `tenants/{id}.website`: `slug`, `hero`, `about`, `contact`, `hours[7]`, `social`, `seo`, `published`.
+- `publicProfiles/{tenantId}`: `tenantId`, `status`, `published`, `name`, `slug`, `branding`, `website` (public subset), `updatedAt`.
+- `tenantSlugs/{slug}`: `{ tenantId, updatedAt }`. Not readable or writable by clients.
+- `tenantApplications` are created by the `submitApplicationAction` server action (the client-create rule remains but is no longer used by the app).
+
+## Menu data (Phase 6, server-written)
+- `categories/{id}`: `tenantId`, `name`, `description`, `visibility`, `sortOrder`, `createdAt`, `updatedAt`.
+- `products/{id}`: `tenantId`, `categoryId`, `name`, `description`, `priceMinor` (integer), `variants[{id,name,priceMinor}]`, `modifierGroups[{id,name,min,max,required,options[{id,name,priceMinor}]}]`, `dietary[]`, `prepTimeMinutes`, `featured`, `available`, `visibility`, `sortOrder`, timestamps.
+- `tenants/{id}.menuMeta`: `{ version, publishedVersion, published, productCount }`.
+- `publicMenus/{tenantId}`: `tenantId`, `status`, `currency`, `categories[{id,name,description,items[...]}]`, `publishedVersion`, `publishedAt`. Not readable or writable by clients.
+
+## Orders and ledger (Phase 7, server-written)
+- `tenants/{id}/orders/{orderId}`: `orderId` is the client's UUID idempotency key. Fields: `orderNumber`, `type`, `tableLabel`, `customer`, `note`, `lines[]` (snapshot: `name`, `variantName`, `modifiers`, `unitPriceMinor`, `quantity`, `lineTotalMinor`), `discount`, `totals {subtotalMinor, discountMinor, serviceChargeMinor, taxMinor, totalMinor}`, `currency`, `taxBp`, `serviceBp`, `status`, `paymentStatus`, `paidMinor`, `refundedMinor`, `payments[]`, `refunds[]`, `fulfilmentStatus`, `cancelReason`, `createdBy`, timestamps, `requestHash` (internal).
+- `tenants/{id}/transactions/{id}`: immutable ledger. `type` `PAYMENT` or `REFUND`, `method`, `demo`, `amountMinor`, `tenderedMinor`, `changeMinor`, `orderId`, `orderNumber`, `reason` (refunds), `createdBy`, `createdAt`. Id is `{paymentRequestId}-{index}` for payments and the refund request id for refunds.
+- `tenants/{id}.posMeta`: `{ orderCounter }`. `tenants/{id}.settings`: see `POS.md`. The tenant document is now writable only by server code.

@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils/cn";
 import Sidebar from "./Sidebar";
 import DashboardHeader from "./DashboardHeader";
 
-export default function DashboardShell({ children }) {
+export default function DashboardShell({ children, navGroups, title, homeHref }) {
   const collapsed = useAppSelector(selectSidebarCollapsed);
   return (
     <div className="min-h-screen">
@@ -16,7 +16,7 @@ export default function DashboardShell({ children }) {
       >
         Skip to content
       </a>
-      <Sidebar />
+      <Sidebar groups={navGroups} title={title} homeHref={homeHref} />
       <div
         className={cn(
           "transition-[padding] duration-200",

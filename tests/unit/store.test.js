@@ -118,3 +118,69 @@ describe("auth and tenant slices", () => {
     expect(selectAuthStatus(s.getState())).toBe("unauthenticated");
   });
 });
+
+import { addLine, beginSubmission, clearCart, removeLine, selectCartCount, setDiscount, setQuantity, setOrderType, setTableLabel } from "@/store/slices/cartSlice";
+import { closePayment, openPayment, selectCategory, selectPaymentTarget } from "@/store/slices/posSlice";
+
+describe("cart and pos slices", () => {
+  const karahi = { productId: "ProdKarahiAAAAAAAAAA", name: "Chicken Karahi", unitPriceMinor: 125000 };
+
+  it("merges identical lines and keeps different options apart", () => {
+    const s = makeStore();
+    s.dispatch(addLine({ ...karahi }));
+    s.dispatch(addLine({ ...karahi, quantity: 2 }));
+    expect(s.getState().cart.lines).toHaveLength(1);
+    expect(selectCartCount(s.getState())).toBe(3);
+    s.dispatch(addLine({ ...karahi, note: "no chili" }));
+    s.dispatch(addLine({ ...karahi, variantId: "variant-large", selections: [{ groupId: "g1", optionIds: ["b", "a"] }] }));
+    s.dispatch(addLine({ ...karahi, variantId: "variant-large", selections: [{ groupId: "g1", optionIds: ["a", "b"] }] })); // same options, different order
+    expect(s.getState().cart.lines).toHaveLength(3);
+  });
+
+  it("caps quantities, removes at zero, and never stores totals", () => {
+    const s = makeStore();
+    s.dispatch(addLine({ ...karahi, quantity: 98 }));
+    s.dispatch(addLine({ ...karahi, quantity: 50 }));
+    expect(s.getState().cart.lines[0].quantity).toBe(99);
+    const id = s.getState().cart.lines[0].lineId;
+    s.dispatch(setQuantity({ lineId: id, quantity: 0 }));
+    expect(s.getState().cart.lines).toHaveLength(0);
+    expect(JSON.stringify(s.getState().cart)).not.toMatch(/total/i);
+  });
+
+  it("resets the idempotency key whenever the cart changes, and reuses it for retries", () => {
+    const s = makeStore();
+    s.dispatch(addLine({ ...karahi }));
+    s.dispatch(beginSubmission());
+    const key = s.getState().cart.clientOrderId;
+    expect(key).toMatch(/^[0-9a-f-]{36}$/);
+    s.dispatch(beginSubmission()); // retry of the same cart
+    expect(s.getState().cart.clientOrderId).toBe(key);
+    s.dispatch(setTableLabel("T5"));
+    expect(s.getState().cart.clientOrderId).toBeNull();
+    s.dispatch(beginSubmission());
+    s.dispatch(setDiscount({ type: "PERCENT", value: "10" }));
+    s.dispatch(setOrderType("DELIVERY"));
+    s.dispatch(removeLine(s.getState().cart.lines[0].lineId));
+    expect(s.getState().cart.clientOrderId).toBeNull();
+  });
+
+  it("tenant switch and logout clear the cart and payment dialog", () => {
+    const s = makeStore();
+    s.dispatch(addLine({ ...karahi }));
+    s.dispatch(selectCategory("c1"));
+    s.dispatch(openPayment({ orderId: "o", orderNumber: 7, totalMinor: 100 }));
+    expect(selectPaymentTarget(s.getState())).toMatchObject({ orderNumber: 7, paidMinor: 0 });
+    s.dispatch(resetTenantScopedState());
+    expect(s.getState().cart.lines).toEqual([]);
+    expect(s.getState().pos.selectedCategoryId).toBe("all");
+    expect(selectPaymentTarget(s.getState())).toBeNull();
+    s.dispatch(addLine({ ...karahi }));
+    s.dispatch(resetAllSessionState());
+    expect(s.getState().cart.lines).toEqual([]);
+    s.dispatch(addLine({ ...karahi }));
+    s.dispatch(clearCart());
+    s.dispatch(closePayment());
+    expect(selectCartCount(s.getState())).toBe(0);
+  });
+});

@@ -122,11 +122,10 @@ service cloud.firestore {
       allow list: if isPlatformAdmin();
       allow create, delete: if false; // tenant creation: server only, after approval
 
-      // Settings managers may edit presentation fields only. status, subscription,
-      // ownerUid and createdAt cannot be changed from the client.
-      allow update: if can(tenantId, 'SETTINGS_MANAGE')
-        && request.resource.data.diff(resource.data).affectedKeys()
-             .hasOnly(['profile', 'branding', 'website', 'settings', 'updatedAt']);
+      // The tenant document is written ONLY by validated server code (Server Actions and the
+      // platform lifecycle): profile, branding, website, settings (tax, currency), status,
+      // subscription, counters. Clients can read it but never write it.
+      allow update: if false;
 
       // Memberships and roles are server-controlled: nobody can grant themselves a role.
       match /members/{memberUid} {
@@ -143,29 +142,25 @@ service cloud.firestore {
         allow delete: if can(tenantId, 'SETTINGS_MANAGE');
       }
 
-      // Menu data. Documents with visibility == 'PUBLIC' also feed the public website.
+      // Menu data is READ-ONLY for clients: every change goes through validated Server Actions
+      // (prices are integers, ids are generated, counters stay consistent).
+      // Documents with visibility == 'PUBLIC' remain readable on the public website.
       match /categories/{id} {
         allow read: if isActiveMember(tenantId)
           || (tenantIsActive(tenantId) && resource.data.visibility == 'PUBLIC');
-        allow create: if canCreate(tenantId, 'MENU_MANAGE');
-        allow update: if canUpdate(tenantId, 'MENU_MANAGE');
-        allow delete: if can(tenantId, 'MENU_MANAGE');
+        allow write: if false; // validated server code only (Server Actions)
       }
 
       match /products/{id} {
         allow read: if isActiveMember(tenantId)
           || (tenantIsActive(tenantId) && resource.data.visibility == 'PUBLIC');
-        allow create: if canCreate(tenantId, 'MENU_MANAGE');
-        allow update: if canUpdate(tenantId, 'MENU_MANAGE');
-        allow delete: if can(tenantId, 'MENU_MANAGE');
+        allow write: if false; // validated server code only (Server Actions)
       }
 
       match /menus/{id} {
         allow read: if isActiveMember(tenantId)
           || (tenantIsActive(tenantId) && resource.data.visibility == 'PUBLIC');
-        allow create: if canCreate(tenantId, 'MENU_MANAGE');
-        allow update: if canUpdate(tenantId, 'MENU_MANAGE');
-        allow delete: if can(tenantId, 'MENU_MANAGE');
+        allow write: if false; // validated server code only (Server Actions)
       }
 
       match /coupons/{id} {

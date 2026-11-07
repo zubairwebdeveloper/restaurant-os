@@ -26,6 +26,7 @@ export const SEED_DOCS = {
   [`tenants/${TENANT_B}/products/pB`]: { tenantId: TENANT_B, name: "Latte", visibility: "PRIVATE" },
   [`tenants/${TENANT_PENDING}/products/pC`]: { tenantId: TENANT_PENDING, name: "Draft", visibility: "PUBLIC" },
 
+  [`tenants/${TENANT_A}/tables/t1`]: { tenantId: TENANT_A, name: "Table 1" },
   [`tenants/${TENANT_A}/orders/o1`]: { tenantId: TENANT_A, total: 1200 },
   [`tenants/${TENANT_A}/transactions/t1`]: { tenantId: TENANT_A, amount: 1200 },
   [`tenants/${TENANT_B}/transactions/tB`]: { tenantId: TENANT_B, amount: 500 },

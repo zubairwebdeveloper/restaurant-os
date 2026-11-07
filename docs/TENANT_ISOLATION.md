@@ -17,6 +17,9 @@
 | Server access checks (cross-tenant, suspended, pending, permissions, id injection) | `tests/unit/tenant-access.test.js` | **passing (run)** |
 | Rules reference only known permissions; no open rules | `tests/unit/permissions.test.js` | **passing (run)** |
 | Firestore rules scenarios (all required acceptance tests) | `tests/security/firestore.rules.test.js` | **written, NOT yet executed** |
+| Public profiles, slug reservations, tighter tenant-update rule | `tests/security/firestore.rules.test.js` | **written, NOT yet executed** |
+| Menu collections are server-write-only; published menu snapshot unreadable by clients | `tests/security/firestore.rules.test.js` | **written, NOT yet executed** |
+| Tenant document client-write ban; orders and ledger server-only; cross-tenant order reads | `tests/security/firestore.rules.test.js` | **written, NOT yet executed** |
 | Storage rules scenarios | `tests/security/storage.rules.test.js` | **written, NOT yet executed** |
 
 **Tenant isolation must not be called complete until `npm run test:rules` passes on a machine with Java and the Firebase emulators.** The build environment used here could not download the emulator, so the rules have never been run against any input.

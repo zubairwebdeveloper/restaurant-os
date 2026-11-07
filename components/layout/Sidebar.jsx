@@ -4,24 +4,28 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 import {
-  Boxes, ChefHat, Circle, LayoutDashboard, LayoutGrid, Palette, PanelLeftClose, PanelLeftOpen,
-  ReceiptText, ShoppingCart, UtensilsCrossed, Wallet, X,
+  Boxes, Brush, Building2, ChefHat, Globe, Inbox, ScrollText, Circle, LayoutDashboard, LayoutGrid, Palette, PanelLeftClose, PanelLeftOpen,
+  ReceiptText, Settings, ShoppingCart, UtensilsCrossed, Wallet, X,
 } from "lucide-react";
 import { getVisibleNav } from "@/config/navigation";
 import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { selectActiveMembership } from "@/store/slices/tenantSlice";
 import {
   closeMobile, selectSidebarCollapsed, selectSidebarMobileOpen, toggleCollapsed,
 } from "@/store/slices/sidebarSlice";
 import { cn } from "@/lib/utils/cn";
 
-const ICONS = { LayoutDashboard, Palette, UtensilsCrossed, ReceiptText, ShoppingCart, LayoutGrid, ChefHat, Boxes, Wallet };
+const ICONS = { Settings, Brush, Globe, Building2, Inbox, ScrollText, LayoutDashboard, Palette, UtensilsCrossed, ReceiptText, ShoppingCart, LayoutGrid, ChefHat, Boxes, Wallet };
 
-export default function Sidebar() {
+export default function Sidebar({ groups: groupsProp, title = "Restaurant OS", homeHref = "/dashboard" }) {
   const pathname = usePathname();
   const dispatch = useAppDispatch();
   const collapsed = useAppSelector(selectSidebarCollapsed);
   const mobileOpen = useAppSelector(selectSidebarMobileOpen);
-  const groups = getVisibleNav();
+  const activeMembership = useAppSelector(selectActiveMembership);
+  const groups = (groupsProp ?? getVisibleNav())
+    .map((g) => ({ ...g, items: g.items.filter((i) => !i.permission || activeMembership?.permissions.includes(i.permission)) }))
+    .filter((g) => g.items.length > 0);
 
   // Close the mobile drawer after navigation and on Escape.
   useEffect(() => {
@@ -56,9 +60,9 @@ export default function Sidebar() {
         )}
       >
         <div className="flex h-[var(--header-h)] items-center justify-between border-b border-border px-4">
-          <Link href="/dashboard" className="flex items-center gap-2 font-display font-semibold">
+          <Link href={homeHref} className="flex items-center gap-2 font-display font-semibold">
             <span className="flex size-8 items-center justify-center rounded-md bg-primary text-primary-foreground">R</span>
-            <span className={cn(collapsed && "lg:sr-only")}>Restaurant OS</span>
+            <span className={cn(collapsed && "lg:sr-only")}>{title}</span>
           </Link>
           <button
             type="button"

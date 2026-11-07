@@ -4,8 +4,10 @@ import sidebar from "./slices/sidebarSlice";
 import ui from "./slices/uiSlice";
 import auth from "./slices/authSlice";
 import tenant from "./slices/tenantSlice";
+import cart from "./slices/cartSlice";
+import pos from "./slices/posSlice";
 
-const appReducer = combineReducers({ theme, sidebar, ui, auth, tenant });
+const appReducer = combineReducers({ theme, sidebar, ui, auth, tenant, cart, pos });
 
 /**
  * Dispatch when the user SWITCHES restaurant or loses a membership.

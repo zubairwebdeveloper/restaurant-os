@@ -74,6 +74,27 @@ describe("tenant isolation", () => {
   });
 });
 
+describe("public website data", () => {
+  beforeEach(async () => {
+    await env.withSecurityRulesDisabled(async (ctx) => {
+      await setDoc(doc(ctx.firestore(), `publicProfiles/${TENANT_A}`), { status: "ACTIVE", slug: "green-lagoon" });
+      await setDoc(doc(ctx.firestore(), `publicProfiles/${TENANT_B}`), { status: "SUSPENDED", slug: "city-cafe" });
+      await setDoc(doc(ctx.firestore(), "tenantSlugs/green-lagoon"), { tenantId: TENANT_A });
+    });
+  });
+
+  it("an ACTIVE public profile is readable by anyone; a suspended one is not", async () => {
+    await assertSucceeds(getDoc(doc(anon(), `publicProfiles/${TENANT_A}`)));
+    await assertFails(getDoc(doc(anon(), `publicProfiles/${TENANT_B}`)));
+  });
+
+  it("public profiles and slug reservations cannot be written from the client", async () => {
+    await assertFails(setDoc(doc(as("ownerA"), `publicProfiles/${TENANT_A}`), { status: "ACTIVE", slug: "hijack" }));
+    await assertFails(setDoc(doc(as("ownerA"), "tenantSlugs/anything"), { tenantId: TENANT_A }));
+    await assertFails(getDoc(doc(as("ownerA"), "tenantSlugs/green-lagoon")));
+  });
+});
+
 describe("public menu", () => {
   it("anyone can read PUBLIC products of an ACTIVE tenant, but not PRIVATE ones", async () => {
     await assertSucceeds(getDoc(doc(anon(), `tenants/${TENANT_A}/products/pPublic`)));
@@ -92,12 +113,16 @@ describe("role permissions", () => {
     await assertFails(updateDoc(doc(as("cashierA"), `tenants/${TENANT_A}`), { profile: { name: "Hacked" } }));
   });
 
-  it("owners can edit presentation fields but not status, subscription or owner", async () => {
+  it("nobody can write the tenant document from the client, not even the owner", async () => {
     const ref = doc(as("ownerA"), `tenants/${TENANT_A}`);
-    await assertSucceeds(updateDoc(ref, { profile: { name: "Green Lagoon Hotel" } }));
+    await assertFails(updateDoc(ref, { settings: { taxBp: 0 } })); // tax and currency are server-validated
+    await assertFails(updateDoc(ref, { branding: { primaryColor: "#000000" } }));
+    await assertFails(updateDoc(ref, { website: { published: true } }));
+    await assertFails(updateDoc(ref, { profile: { name: "Renamed" } }));
     await assertFails(updateDoc(ref, { status: "ACTIVE" }));
     await assertFails(updateDoc(ref, { subscription: { plan: "ENTERPRISE" } }));
     await assertFails(updateDoc(ref, { ownerUid: "ownerB" }));
+    await assertFails(updateDoc(ref, { posMeta: { orderCounter: 0 } }));
   });
 
   it("chefs cannot read financial records but can read orders", async () => {
@@ -110,14 +135,29 @@ describe("role permissions", () => {
     await assertFails(getDocs(collection(as("cashierA"), `tenants/${TENANT_A}/employees`)));
   });
 
-  it("managers can manage the menu", async () => {
-    await assertSucceeds(setDoc(doc(as("managerA"), `tenants/${TENANT_A}/products/pNew`), product(TENANT_A)));
+  it("menu data is server-write-only: not even the owner can write products or categories from the client", async () => {
+    for (const uid of ["ownerA", "managerA", "cashierA"]) {
+      await assertFails(setDoc(doc(as(uid), `tenants/${TENANT_A}/products/pNew`), product(TENANT_A)));
+      await assertFails(updateDoc(doc(as(uid), `tenants/${TENANT_A}/products/pPublic`), { name: "Free food" }));
+      await assertFails(deleteDoc(doc(as(uid), `tenants/${TENANT_A}/products/pPublic`)));
+      await assertFails(setDoc(doc(as(uid), `tenants/${TENANT_A}/categories/cNew`), { tenantId: TENANT_A, name: "X", visibility: "PUBLIC" }));
+    }
   });
 
-  it("cashiers cannot create, edit or delete menu items", async () => {
-    await assertFails(setDoc(doc(as("cashierA"), `tenants/${TENANT_A}/products/pNew`), product(TENANT_A)));
-    await assertFails(updateDoc(doc(as("cashierA"), `tenants/${TENANT_A}/products/pPublic`), { name: "Free food" }));
-    await assertFails(deleteDoc(doc(as("cashierA"), `tenants/${TENANT_A}/products/pPublic`)));
+  it("members can still read menu data (and anyone can read PUBLIC items)", async () => {
+    await assertSucceeds(getDoc(doc(as("cashierA"), `tenants/${TENANT_A}/products/pPrivate`)));
+    await assertSucceeds(getDoc(doc(anon(), `tenants/${TENANT_A}/products/pPublic`)));
+  });
+
+  it("the published menu snapshot is not readable by clients", async () => {
+    await env.withSecurityRulesDisabled((ctx) => setDoc(doc(ctx.firestore(), `publicMenus/${TENANT_A}`), { status: "ACTIVE", categories: [] }));
+    await assertFails(getDoc(doc(anon(), `publicMenus/${TENANT_A}`)));
+    await assertFails(getDoc(doc(as("ownerA"), `publicMenus/${TENANT_A}`)));
+  });
+
+  it("tables (a client-writable collection) still enforce tenant checks and permissions", async () => {
+    await assertSucceeds(setDoc(doc(as("managerA"), `tenants/${TENANT_A}/tables/tNew`), { tenantId: TENANT_A, name: "Table 5" }));
+    await assertFails(setDoc(doc(as("cashierA"), `tenants/${TENANT_A}/tables/tNew2`), { tenantId: TENANT_A, name: "Table 6" }));
   });
 });
 
@@ -142,15 +182,36 @@ describe("roles and memberships", () => {
 
 describe("tenant id manipulation", () => {
   it("cannot create documents in another tenant", async () => {
-    await assertFails(setDoc(doc(as("ownerA"), `tenants/${TENANT_B}/products/pEvil`), product(TENANT_B)));
+    await assertFails(setDoc(doc(as("ownerA"), `tenants/${TENANT_B}/tables/tEvil`), { tenantId: TENANT_B, name: "Evil" }));
   });
 
   it("cannot write a document whose tenantId field points at another tenant", async () => {
-    await assertFails(setDoc(doc(as("ownerA"), `tenants/${TENANT_A}/products/pEvil`), product(TENANT_B)));
+    await assertFails(setDoc(doc(as("ownerA"), `tenants/${TENANT_A}/tables/tEvil`), { tenantId: TENANT_B, name: "Evil" }));
   });
 
   it("cannot move an existing document to another tenant by changing tenantId", async () => {
-    await assertFails(updateDoc(doc(as("ownerA"), `tenants/${TENANT_A}/products/pPublic`), { tenantId: TENANT_B }));
+    await assertFails(updateDoc(doc(as("ownerA"), `tenants/${TENANT_A}/tables/t1`), { tenantId: TENANT_B }));
+    await assertSucceeds(updateDoc(doc(as("ownerA"), `tenants/${TENANT_A}/tables/t1`), { name: "Renamed", tenantId: TENANT_A }));
+  });
+});
+
+describe("orders and the payment ledger", () => {
+  it("orders are readable by order readers but can never be written from the client", async () => {
+    await assertSucceeds(getDoc(doc(as("cashierA"), `tenants/${TENANT_A}/orders/o1`)));
+    for (const uid of ["ownerA", "managerA", "cashierA"]) {
+      await assertFails(setDoc(doc(as(uid), `tenants/${TENANT_A}/orders/oNew`), { tenantId: TENANT_A, totals: { totalMinor: 1 } }));
+      await assertFails(updateDoc(doc(as(uid), `tenants/${TENANT_A}/orders/o1`), { status: "PAID", "totals.totalMinor": 0 }));
+      await assertFails(deleteDoc(doc(as(uid), `tenants/${TENANT_A}/orders/o1`)));
+    }
+  });
+
+  it("cross-tenant order reads are denied", async () => {
+    await assertFails(getDoc(doc(as("ownerB"), `tenants/${TENANT_A}/orders/o1`)));
+    await assertFails(getDocs(collection(as("ownerB"), `tenants/${TENANT_A}/orders`)));
+  });
+
+  it("payment and refund ledger entries cannot be created by clients", async () => {
+    await assertFails(setDoc(doc(as("ownerA"), `tenants/${TENANT_A}/transactions/fake`), { tenantId: TENANT_A, type: "PAYMENT", amountMinor: 1 }));
   });
 });
 
