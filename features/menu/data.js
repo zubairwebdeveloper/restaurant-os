@@ -1,0 +1,95 @@
+// Sample data for Phase 2. Replaced by Firestore in Phase 3. Prices in PKR.
+export const categories = [
+  { id: "starters", name: "Starters" },
+  { id: "grill", name: "From the Grill" },
+  { id: "mains", name: "Mains" },
+  { id: "desserts", name: "Desserts" },
+  { id: "drinks", name: "Drinks" },
+];
+
+export const menuItems = [
+  {
+    id: "lamb-karahi", slug: "lamb-karahi", name: "Lagoon Lamb Karahi", category: "mains",
+    price: 2450, featured: true, spice: 2, available: true, time: "35 min",
+    description: "Tender lamb cooked in an iron wok with tomatoes, green chilli, ginger and black pepper, finished with fresh coriander.",
+    ingredients: ["Lamb", "Tomato", "Green chilli", "Ginger", "Black pepper", "Coriander"],
+    image: "/images/dishes/lamb-karahi.jpg",
+  },
+  {
+    id: "rahu-tikka", slug: "charcoal-rahu-tikka", name: "Charcoal Rahu Tikka", category: "grill",
+    price: 1890, featured: true, spice: 2, available: true, time: "25 min",
+    description: "River rahu marinated overnight in yoghurt, ajwain and lemon, then grilled over charcoal until the edges blister.",
+    ingredients: ["Rahu fish", "Yoghurt", "Ajwain", "Lemon", "Kashmiri chilli"],
+    image: "/images/dishes/rahu-tikka.jpg",
+  },
+  {
+    id: "seekh-platter", slug: "seekh-kebab-platter", name: "Seekh Kebab Platter", category: "grill",
+    price: 1650, featured: true, spice: 3, available: true, time: "25 min",
+    description: "Hand-minced beef and mutton seekh with mint chutney, onion rings and warm roghni naan.",
+    ingredients: ["Beef", "Mutton", "Green chilli", "Mint", "Roghni naan"],
+    image: "/images/dishes/seekh-platter.jpg",
+  },
+  {
+    id: "chicken-handi", slug: "creamy-chicken-handi", name: "Creamy Chicken Handi", category: "mains",
+    price: 1790, featured: false, spice: 1, available: true, time: "30 min",
+    description: "Slow-cooked chicken in a clay pot with cream, cashew and green cardamom. Mild and rich.",
+    ingredients: ["Chicken", "Cream", "Cashew", "Cardamom", "Fenugreek"],
+    image: "/images/dishes/chicken-handi.jpg",
+  },
+  {
+    id: "yakhni-pulao", slug: "mutton-yakhni-pulao", name: "Mutton Yakhni Pulao", category: "mains",
+    price: 1590, featured: false, spice: 1, available: true, time: "40 min",
+    description: "Long-grain rice cooked in a slow mutton stock with whole spices, served with kachumber and raita.",
+    ingredients: ["Basmati rice", "Mutton stock", "Cumin", "Cloves", "Raita"],
+    image: "/images/dishes/yakhni-pulao.jpg",
+  },
+  {
+    id: "dal-makhani", slug: "dal-makhani", name: "Smoked Dal Makhani", category: "mains",
+    price: 1190, featured: false, spice: 1, available: true, time: "20 min",
+    description: "Black lentils simmered for twelve hours with butter and a coal smoke finish.",
+    ingredients: ["Black lentils", "Butter", "Cream", "Tomato", "Coal smoke"],
+    image: "/images/dishes/dal-makhani.jpg",
+  },
+  {
+    id: "bruschetta-chaat", slug: "chaat-bruschetta", name: "Chaat Bruschetta", category: "starters",
+    price: 790, featured: false, spice: 1, available: true, time: "10 min",
+    description: "Toasted sourdough with chickpea chaat, tamarind, pomegranate and whipped yoghurt.",
+    ingredients: ["Sourdough", "Chickpeas", "Tamarind", "Pomegranate", "Yoghurt"],
+    image: "/images/dishes/bruschetta-chaat.jpg",
+  },
+  {
+    id: "lamb-chops", slug: "masala-lamb-chops", name: "Masala Lamb Chops", category: "grill",
+    price: 2790, featured: true, spice: 2, available: true, time: "30 min",
+    description: "Four lamb chops brushed with garlic and raw papaya, grilled medium and rested on charred onions.",
+    ingredients: ["Lamb chops", "Garlic", "Raw papaya", "Cumin", "Onion"],
+    image: "/images/dishes/lamb-chops.jpg",
+  },
+  {
+    id: "kheer-brulee", slug: "kheer-brulee", name: "Kheer Brulee", category: "desserts",
+    price: 690, featured: false, spice: 0, available: true, time: "10 min",
+    description: "Cardamom rice pudding under a thin burnt-sugar crust, topped with pistachio.",
+    ingredients: ["Rice", "Milk", "Cardamom", "Pistachio", "Sugar"],
+    image: "/images/dishes/kheer-brulee.jpg",
+  },
+  {
+    id: "gulab-cheesecake", slug: "gulab-jamun-cheesecake", name: "Gulab Jamun Cheesecake", category: "desserts",
+    price: 850, featured: false, spice: 0, available: true, time: "10 min",
+    description: "Baked cheesecake with a rose syrup centre and crumbled gulab jamun.",
+    ingredients: ["Cream cheese", "Rose syrup", "Gulab jamun", "Biscuit"],
+    image: "/images/dishes/gulab-cheesecake.jpg",
+  },
+  {
+    id: "mint-lemonade", slug: "lagoon-mint-lemonade", name: "Lagoon Mint Lemonade", category: "drinks",
+    price: 390, featured: false, spice: 0, available: true, time: "5 min",
+    description: "Crushed mint, fresh lime and a little rock salt over ice. Green and sharp.",
+    ingredients: ["Mint", "Lime", "Rock salt", "Ice"],
+    image: "/images/dishes/mint-lemonade.jpg",
+  },
+  {
+    id: "saffron-kahwa", slug: "saffron-kahwa", name: "Saffron Kahwa", category: "drinks",
+    price: 450, featured: false, spice: 0, available: true, time: "8 min",
+    description: "Green tea steeped with saffron, cardamom, cinnamon and almonds.",
+    ingredients: ["Green tea", "Saffron", "Cardamom", "Cinnamon", "Almond"],
+    image: "/images/dishes/saffron-kahwa.jpg",
+  },
+];

@@ -1,168 +1,80 @@
 @import "tailwindcss";
 
-/* ---------------------------------------------------------------
-   RESTAURANT OS DESIGN TOKENS
-   Components must use semantic tokens only (bg-surface, text-muted-foreground ...).
-   Tenant branding overrides --primary / --primary-foreground / --ring on a scoped
-   wrapper element (see lib/utils/color.js buildBrandStyle) - never globally.
----------------------------------------------------------------- */
+/* Midnight Olive design tokens */
 :root {
-  color-scheme: light;
+  --deep-forest: #151d18;
+  --warm-ivory: #f5f0e6;
+  --muted-gold: #b9975b;
+  --olive: #66745a;
+  --charcoal: #292d29;
+  --sand: #d8c8ac;
 
-  /* Neutrals: warm ivory + charcoal */
-  --background: #f6f3ec;
-  --foreground: #1a1d23;
-  --surface: #ffffff;
-  --elevated: #ffffff;
-  --muted: #ece8de;
-  --muted-foreground: #5f5e58;
-  --border: #ddd7c9;
-  --ring: #8c6a31;
-
-  /* Brand (tenant-overridable) */
-  --primary: #1c2330;
-  --primary-foreground: #f6f3ec;
-  --secondary: #ece8de;
-  --secondary-foreground: #1a1d23;
-  --accent: #b8935a; /* champagne - decorative / borders / charts, not body text */
-  --accent-foreground: #1a1d23;
-
-  /* Status */
-  --success: #17724a;
-  --warning: #8f5f10;
-  --destructive: #b03a28;
-  --info: #25619a;
-
-  /* Type */
-  --font-sans: "Inter", "DM Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --font-display: "Manrope", "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-
-  /* Radius scale: small controls < panels < dialogs */
-  --radius-sm: 0.375rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
-
-  /* Elevation */
-  --shadow-sm: 0 1px 2px rgb(26 29 35 / 0.06);
-  --shadow-md: 0 6px 20px -8px rgb(26 29 35 / 0.18);
-  --shadow-lg: 0 20px 50px -20px rgb(26 29 35 / 0.35);
-
-  /* Layout */
-  --sidebar-w: 16rem;
-  --sidebar-w-collapsed: 4.5rem;
-  --header-h: 3.5rem;
-  --container-max: 80rem;
-
-  /* Motion */
-  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
-  --dur-fast: 120ms;
-  --dur-base: 200ms;
-  --dur-slow: 320ms;
-}
-
-.dark {
-  color-scheme: dark;
-  --background: #0f131a;
-  --foreground: #ece8df;
-  --surface: #161b24;
-  --elevated: #1d2330;
-  --muted: #222938;
-  --muted-foreground: #a3a39b;
-  --border: #2c3445;
-  --ring: #d6b67a;
-
-  --primary: #d6b67a;
-  --primary-foreground: #14181f;
-  --secondary: #222938;
-  --secondary-foreground: #ece8df;
-  --accent: #c9a86b;
-  --accent-foreground: #14181f;
-
-  --success: #43b987;
-  --warning: #e0a63f;
-  --destructive: #ea7a68;
-  --info: #6aa5dc;
-
-  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
-  --shadow-md: 0 8px 24px -10px rgb(0 0 0 / 0.6);
-  --shadow-lg: 0 24px 60px -20px rgb(0 0 0 / 0.7);
+  --background: var(--deep-forest);
+  --foreground: var(--warm-ivory);
+  --radius: 0.375rem;
 }
 
 @theme inline {
+  --color-forest: var(--deep-forest);
+  --color-ivory: var(--warm-ivory);
+  --color-gold: var(--muted-gold);
+  --color-olive: var(--olive);
+  --color-charcoal: var(--charcoal);
+  --color-sand: var(--sand);
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --color-surface: var(--surface);
-  --color-elevated: var(--elevated);
-  --color-muted: var(--muted);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-border: var(--border);
-  --color-ring: var(--ring);
-  --color-primary: var(--primary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-secondary: var(--secondary);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-accent: var(--accent);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-success: var(--success);
-  --color-warning: var(--warning);
-  --color-destructive: var(--destructive);
-  --color-info: var(--info);
-  --color-success-soft: color-mix(in oklab, var(--success) 14%, var(--surface));
-  --color-warning-soft: color-mix(in oklab, var(--warning) 14%, var(--surface));
-  --color-destructive-soft: color-mix(in oklab, var(--destructive) 12%, var(--surface));
-  --color-info-soft: color-mix(in oklab, var(--info) 12%, var(--surface));
 
-  --font-sans: var(--font-sans);
-  --font-display: var(--font-display);
+  --font-heading: var(--font-cormorant), Georgia, serif;
+  --font-sans: var(--font-dm-sans), system-ui, sans-serif;
 
-  --radius-sm: var(--radius-sm);
-  --radius-md: var(--radius-md);
-  --radius-lg: var(--radius-lg);
-  --shadow-sm: var(--shadow-sm);
-  --shadow-md: var(--shadow-md);
-  --shadow-lg: var(--shadow-lg);
+  --radius-sm: 0.25rem;
+  --radius-md: var(--radius);
+  --radius-lg: 0.625rem;
+
+  --shadow-soft: 0 10px 30px -12px rgb(0 0 0 / 0.45);
+  --shadow-lift: 0 24px 50px -20px rgb(0 0 0 / 0.6);
 }
 
-html {
-  background: var(--background);
-}
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans);
-  line-height: 1.55;
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
-}
-
-h1, h2, h3 {
-  font-family: var(--font-display);
-  letter-spacing: -0.015em;
-}
-
-/* Tabular numerals for money, counts and tables */
-.tabular {
-  font-variant-numeric: tabular-nums;
-}
-
-:focus-visible {
-  outline: 2px solid var(--ring);
-  outline-offset: 2px;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-heading);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    line-height: 1.05;
+  }
+  ::selection {
+    background: var(--muted-gold);
+    color: var(--deep-forest);
+  }
+  :focus-visible {
+    outline: 2px solid var(--muted-gold);
+    outline-offset: 3px;
   }
 }
 
-/* Receipts: when printing, show only the element marked .print-area. */
-@media print {
-  body * { visibility: hidden !important; }
-  .print-area, .print-area * { visibility: visible !important; }
-  .print-area { position: fixed; inset: 0; margin: 0; padding: 12px; background: #fff; color: #000; overflow: visible; }
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
